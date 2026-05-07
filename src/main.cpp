@@ -1,9 +1,14 @@
 #include <Arduino.h>
 #include <DIYables_LCD_I2C.h>
 #include <Keypad.h>
+#include <shared_hardware_config.h>
 
 #include "Button.h"
+#include "EspNowHelper.h"
 #include "hardware_config.h"
+
+uint8_t hubAddress[] = HUB_MAC_ADDRESS;
+EspNowHelper espNowHelper;
 
 void handleButtonPress(void* button_handle, void* usr_data);
 void handleKeyboardInput();
@@ -13,6 +18,7 @@ void resetInput();
 void playDeniedTone();
 void playGrantedTone();
 static void playTone(int freq, int duration_ms);
+void notifyHub();
 
 DIYables_LCD_I2C lcd(0x27, 20, 4);
 
@@ -41,6 +47,10 @@ unsigned long deniedAt = 0;
 void setup() {
   Serial.begin(115200);
 
+  espNowHelper.begin(DEVICE_ID);
+  espNowHelper.addPeer(hubAddress);
+  espNowHelper.sendModuleConnected(hubAddress);
+
   lcd.init();
   lcd.backlight();
 
@@ -52,6 +62,7 @@ void setup() {
 
 void loop() {
   if (state == STATE_WIN) {
+    notifyHub();
     return;
   }
 
@@ -63,6 +74,14 @@ void loop() {
   }
 
   handleKeyboardInput();
+}
+
+void notifyHub() {
+  static bool notified = false;
+  if (!notified) {
+    espNowHelper.sendModuleUpdated(hubAddress, true);
+    notified = true;
+  }
 }
 
 void showInstructions() {

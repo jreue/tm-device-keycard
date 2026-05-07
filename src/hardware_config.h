@@ -1,5 +1,10 @@
 #pragma once
 
+// ====================
+// This Devices Configuration
+// ====================
+#define DEVICE_ID 106
+
 // Keypad row pins
 #define KEYPAD_R1 32
 #define KEYPAD_R2 33
