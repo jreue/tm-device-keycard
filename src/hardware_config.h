@@ -17,10 +17,10 @@
 #define KEYPAD_C3 13
 
 // Button pin
-#define BUTTON_PIN GPIO_NUM_15
+#define BUTTON_PIN GPIO_NUM_5
 
 // Buzzer pin
-#define BUZZER_PIN 5
+#define BUZZER_PIN GPIO_NUM_15
 
 // Game settings
 #define NUM_DIGITS 64
