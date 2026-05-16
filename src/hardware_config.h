@@ -23,4 +23,4 @@
 #define BUZZER_PIN GPIO_NUM_15
 
 // Game settings
-#define NUM_DIGITS 64
+#define NUM_DIGITS 128

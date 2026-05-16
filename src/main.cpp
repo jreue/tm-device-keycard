@@ -15,6 +15,7 @@ void handleKeyboardInput();
 void handleEnterKeyPressed();
 void showInstructions();
 void resetInput();
+void scrollDisplayUp();
 void playDeniedTone();
 void playGrantedTone();
 static void playTone(int freq, int duration_ms);
@@ -43,6 +44,7 @@ const unsigned long DENIED_TIMEOUT_MS = 3000;
 int digitCount = 0;
 int displayPos = 0;
 unsigned long deniedAt = 0;
+char displayBuffer[4][20];
 
 void setup() {
   Serial.begin(115200);
@@ -96,15 +98,35 @@ void showInstructions() {
   const char* line2 = "Access Code";
   int col2 = (20 - (int)strlen(line2)) / 2;
 
-  lcd.setCursor(col1, 1);
+  const char* line4 = "Press # to Submit";
+  int col4 = (20 - (int)strlen(line4)) / 2;
+
+  lcd.setCursor(col1, 0);
   lcd.print(line1);
-  lcd.setCursor(col2, 2);
+  lcd.setCursor(col2, 1);
   lcd.print(line2);
+  lcd.setCursor(col4, 3);
+  lcd.print(line4);
 }
 
 void resetInput() {
   digitCount = 0;
   displayPos = 0;
+  memset(displayBuffer, ' ', sizeof(displayBuffer));
+}
+
+void scrollDisplayUp() {
+  memcpy(displayBuffer[0], displayBuffer[1], 20);
+  memcpy(displayBuffer[1], displayBuffer[2], 20);
+  memcpy(displayBuffer[2], displayBuffer[3], 20);
+  memset(displayBuffer[3], ' ', 20);
+  for (int row = 0; row < 4; row++) {
+    lcd.setCursor(0, row);
+    for (int col = 0; col < 20; col++) {
+      lcd.print(displayBuffer[row][col]);
+    }
+  }
+  displayPos -= 20;
 }
 
 void handleKeyboardInput() {
@@ -136,7 +158,10 @@ void handleKeyboardInput() {
   if (digitCount >= NUM_DIGITS)
     return;
 
-  // Print digit at current display position
+  // Print digit at current display position (scroll up if past row 3)
+  if (displayPos / 20 >= 4)
+    scrollDisplayUp();
+  displayBuffer[displayPos / 20][displayPos % 20] = key;
   lcd.setCursor(displayPos % 20, displayPos / 20);
   lcd.print(key);
   displayPos++;
@@ -144,6 +169,9 @@ void handleKeyboardInput() {
 
   // Auto-insert * delimiter after every 4th digit (not after the last)
   if (digitCount % 4 == 0 && digitCount < NUM_DIGITS) {
+    if (displayPos / 20 >= 4)
+      scrollDisplayUp();
+    displayBuffer[displayPos / 20][displayPos % 20] = '*';
     lcd.setCursor(displayPos % 20, displayPos / 20);
     lcd.print('*');
     displayPos++;
